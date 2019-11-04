@@ -70,10 +70,24 @@ class Board {
 }
 class Player{
   private cells: Cell[] = [];
+  private _board:Board;
+
+  constructor (board:Board){
+    this._board = board;
+  }
+  get board(){
+    return this._board;
+  }
   add_to_queue(cell:Cell){
+    this.board.visit(cell);
     this.cells.push(cell);
   }
-  *possible_steps(c:Cell){
+  *get_next_move():any{
+    while (this.cells.length){
+      yield this.cells.shift();
+    }
+  }
+  *get_possible_steps_from(c:Cell){
     const steps = [
       [-2, 1],
       [-1, 2],
@@ -94,6 +108,10 @@ class Player{
       }
     }
   }
+
+  has_visited(cell:Cell):boolean{
+    return this.board.is_visited(cell);
+  }
 }
 
 
@@ -101,33 +119,32 @@ class Player{
 
 
 export function knight(start_point: string, end_point: string): any {
-  const player = new Player();
-  const board = new Board();
+  const player = new Player(new Board());
+
 
   let p1 = Cell.CREATE_FROM_STRING(start_point);
   let p2 = Cell.CREATE_FROM_STRING(end_point);
   p1.distance = 0;
 
-  board.visit(p1);
+
   player.add_to_queue(p1);
 
-  while (cells.length) {
-    let p = cells.shift();
-    let d = p.distance;
+  for (let current_cell of player.get_next_move()) {
+    let d = current_cell.distance;
 
-    if (Cell.EQUAL(p, p2)) {
+    if (Cell.EQUAL(current_cell, p2)) {
       return d;
     }
 
-    for (let n of possible_steps(p)) {
-      if (n && !is_visited(n)) {
-        n.distance = d + 1;
-        visited.push(n);
-        cells.push(n);
+    for (let next_move of player.get_possible_steps_from(current_cell)) {
+      if (next_move && !player.has_visited(next_move)) {
+        next_move.distance = d + 1;
+        player.add_to_queue(next_move);
       }
     }
 
   }
 
+  throw new Error('Wrong algorithm - count not found');
 }
 
