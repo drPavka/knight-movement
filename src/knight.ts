@@ -114,10 +114,6 @@ class Player{
   }
 }
 
-
-
-
-
 export function knight(start_point: string, end_point: string): any {
   const player = new Player(new Board());
 
@@ -136,10 +132,10 @@ export function knight(start_point: string, end_point: string): any {
       return d;
     }
 
-    for (let next_move of player.get_possible_steps_from(current_cell)) {
-      if (next_move && !player.has_visited(next_move)) {
-        next_move.distance = d + 1;
-        player.add_to_queue(next_move);
+    for (let next_step of player.get_possible_steps_from(current_cell)) {
+      if (next_step && !player.has_visited(next_step)) {
+        next_step.distance = d + 1;
+        player.add_to_queue(next_step);
       }
     }
 
