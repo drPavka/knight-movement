@@ -1,7 +1,7 @@
 class Cell {
   private readonly x: number;
   private readonly y: number;
-  private _distance: number = 0;
+  private _distance: number = null;
 
   private constructor(x: number, y: number) {
     this.x = x;
@@ -14,6 +14,14 @@ class Cell {
 
   toArray() {
     return [this.x, this.y];
+  }
+
+  set distance(distance: number) {
+    this._distance = distance;
+  }
+
+  get distance(): number {
+    return this._distance;
   }
 
   static CREATE(x: number, y: number, distance: number = 0) {
@@ -38,19 +46,12 @@ class Cell {
     return new Cell(c[0], c[1]);
   }
 
-  set distance(distance: number) {
-    this._distance = distance;
-  }
-
-  get distance(): number {
-    return this._distance;
-  }
 
   static IS_ON_BOARD(x: number, y: number): boolean {
     return [x, y].every((i: number) => i > 0 && i <= 8);
   }
 
-  static IS_EQUAL(c1: Cell, c2: Cell): boolean {
+  static EQUAL(c1: Cell, c2: Cell): boolean {
     return JSON.stringify(c1.toArray()) === JSON.stringify(c2.toArray());
   }
 }
@@ -83,7 +84,7 @@ function* possible_steps(c: Cell) {
 
 function is_visited(point: Cell) {
   return visited.some((visited_point: Cell) => {
-    return Cell.IS_EQUAL(point, visited_point);
+    return Cell.EQUAL(point, visited_point);
   })
 }
 
@@ -97,10 +98,10 @@ function main(start_point: string, end_point: string): any {
   cells.push(p1);
 
   while (cells.length) {
-    let p = cells.pop();
+    let p = cells.shift();
     let d = p.distance;
 
-    if (Cell.IS_EQUAL(p, p2)) {
+    if (Cell.EQUAL(p, p2)) {
       console.log('found', d);
       return;
     }
@@ -117,4 +118,4 @@ function main(start_point: string, end_point: string): any {
 
 }
 
-main('a1', 'a3');
+main('a1', 'h3');
