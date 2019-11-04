@@ -55,55 +55,68 @@ class Cell {
     return JSON.stringify(c1.toArray()) === JSON.stringify(c2.toArray());
   }
 }
+class Board {
+  private visited: Cell[] = [];
 
+  visit(cell:Cell){
+    this.visited.push(cell);
+  }
+  is_visited(cell:Cell){
+    return this.visited.some((visited_point: Cell) => {
+      return Cell.EQUAL(cell, visited_point);
+    })
+  }
 
-let visited: Cell[] = [];
-let cells: Cell[] = [];
+}
+class Player{
+  private cells: Cell[] = [];
+  add_to_queue(cell:Cell){
+    this.cells.push(cell);
+  }
+  *possible_steps(c:Cell){
+    const steps = [
+      [-2, 1],
+      [-1, 2],
+      [1, 2],
+      [2, 1],
+      [-2, -1],
+      [-1, -2],
+      [1, -2],
+      [2, -1]
+    ];
+    for (let i = 0; i < steps.length; i++) {
+      let [x, y] = steps[i];
+      let [c_x, c_y] = c.toArray();
 
-function* possible_steps(c: Cell) {
-  const steps = [
-    [-2, 1],
-    [-1, 2],
-    [1, 2],
-    [2, 1],
-    [-2, -1],
-    [-1, -2],
-    [1, -2],
-    [2, -1]
-  ];
-  for (let i = 0; i < steps.length; i++) {
-    let [x, y] = steps[i];
-    let [c_x, c_y] = c.toArray();
-
-    let new_cell = Cell.CREATE(c_x + x, c_y + y);
-    if (new_cell) {
-      yield new_cell;
+      let new_cell = Cell.CREATE(c_x + x, c_y + y);
+      if (new_cell) {
+        yield new_cell;
+      }
     }
   }
 }
 
-function is_visited(point: Cell) {
-  return visited.some((visited_point: Cell) => {
-    return Cell.EQUAL(point, visited_point);
-  })
-}
 
 
-function main(start_point: string, end_point: string): any {
+
+
+export function knight(start_point: string, end_point: string): any {
+  const player = new Player();
+  const board = new Board();
+
   let p1 = Cell.CREATE_FROM_STRING(start_point);
   let p2 = Cell.CREATE_FROM_STRING(end_point);
   p1.distance = 0;
 
-  visited.push(p1);
-  cells.push(p1);
+  board.visit(p1);
+  player.add_to_queue(p1);
 
   while (cells.length) {
     let p = cells.shift();
     let d = p.distance;
 
     if (Cell.EQUAL(p, p2)) {
-      console.log('found', d);
-      return;
+      return d;
     }
 
     for (let n of possible_steps(p)) {
@@ -118,4 +131,3 @@ function main(start_point: string, end_point: string): any {
 
 }
 
-main('a1', 'h3');
