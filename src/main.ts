@@ -1,46 +1,65 @@
-function point_string_to_num(point: string): number[] {
-  let r = point.match(/^([a-hA-H])([1-8])$/);
-  if (!r) {
-    throw new Error('Wrong coordinates');
+class Cell {
+  private readonly x: number;
+  private readonly y: number;
+  private _distance: number = 0;
+
+  private constructor(x: number, y: number) {
+    this.x = x;
+    this.y = y;
   }
 
-  r = r.splice(1, 3);
-  r[0] = (r[0].toLowerCase().charCodeAt(0) - 'h'.charCodeAt(0) + 8).toString();
-  return r.map((i: string) => parseInt(i));
-}
+  toString() {
+    return String.fromCharCode(this.x + 'h'.charCodeAt(0) - 8).toUpperCase() + this.y.toString();
+  }
 
-function point_num_to_string(point: number[]): string {
+  toArray() {
+    return [this.x, this.y];
+  }
 
-  return String.fromCharCode(point[0] + 'h'.charCodeAt(0) - 8).toUpperCase() + point[1].toString();
-}
+  static CREATE(x: number, y: number, distance: number = 0) {
+    let c = null;
+    if (Cell.IS_ON_BOARD(x, y)) {
+      c = new Cell(x, y);
+      c.distance = distance;
+    }
+    return c;
+  }
 
-function is_on_board(point: number[]): boolean {
-  if (point.length !== 2) throw new Error('Wrong point');
+  static CREATE_FROM_STRING(point: string) {
+    let r = point.match(/^([a-hA-H])([1-8])$/);
+    if (!r) {
+      throw new Error('Wrong coordinates');
+    }
 
-  return point.every((i: number) => i > 0 && i <= 8);
-}
+    r = r.splice(1, 3);
+    r[0] = (r[0].toLowerCase().charCodeAt(0) - 'h'.charCodeAt(0) + 8).toString();
+    let c: number[] = r.map((i: string) => parseInt(i));
 
-function move(point: number[], x: number, y: number): number[] | void {
-  let p = [point[0] + x, point[1] + y];
-  if (is_on_board(p)) {
-    return p;
+    return new Cell(c[0], c[1]);
+  }
+
+  set distance(distance: number) {
+    this._distance = distance;
+  }
+
+  get distance(): number {
+    return this._distance;
+  }
+
+  static IS_ON_BOARD(x: number, y: number): boolean {
+    return [x, y].every((i: number) => i > 0 && i <= 8);
+  }
+
+  static IS_EQUAL(c1: Cell, c2: Cell): boolean {
+    return JSON.stringify(c1.toArray()) === JSON.stringify(c2.toArray());
   }
 }
 
-let visited: number[][] = [];
-let results: number[][][] = [];
 
-function is_equal(p1: number[], p2: number[]) {
-  return JSON.stringify(p1) === JSON.stringify(p2);
-}
+let visited: Cell[] = [];
+let cells: Cell[] = [];
 
-function is_visited(point: number[]) {
-  return visited.some((visited_point: number[]) => {
-    return is_equal(point, visited_point);
-  })
-}
-
-function try_way(point: number[], destination: number[]) {
+function* possible_steps(c: Cell) {
   const steps = [
     [-2, 1],
     [-1, 2],
@@ -51,40 +70,51 @@ function try_way(point: number[], destination: number[]) {
     [1, -2],
     [2, -1]
   ];
-  steps.forEach(([x, y]: [number, number]) => {
-    let p = move(point, x, y);
+  for (let i = 0; i < steps.length; i++) {
+    let [x, y] = steps[i];
+    let [c_x, c_y] = c.toArray();
 
-    if (p) {
-      if (!is_equal(p, destination)) {
-        if (!is_visited(p)) {
-          visited.push(p);
-          try_way(p, destination);
-        }
-      } else {
-        let i: number = results.push(visited.slice());
-        console.log('found', results[i - 1].length);
-      }
-
-
+    let new_cell = Cell.CREATE(c_x + x, c_y + y);
+    if (new_cell) {
+      yield new_cell;
     }
+  }
+}
+
+function is_visited(point: Cell) {
+  return visited.some((visited_point: Cell) => {
+    return Cell.IS_EQUAL(point, visited_point);
   })
 }
 
-function main(start_point: string, end_point: string): number[][][] {
-  let p1 = point_string_to_num(start_point);
-  let p2 = point_string_to_num(end_point);
 
-  try_way(p1, p2);
-  return results.map((r: number[][]) => {
-    r.unshift(p1);
-    r.push(p2);
-    return r;
-  });
+function main(start_point: string, end_point: string): any {
+  let p1 = Cell.CREATE_FROM_STRING(start_point);
+  let p2 = Cell.CREATE_FROM_STRING(end_point);
+  p1.distance = 0;
+
+  visited.push(p1);
+  cells.push(p1);
+
+  while (cells.length) {
+    let p = cells.pop();
+    let d = p.distance;
+
+    if (Cell.IS_EQUAL(p, p2)) {
+      console.log('found', d);
+      return;
+    }
+
+    for (let n of possible_steps(p)) {
+      if (n && !is_visited(n)) {
+        n.distance = d + 1;
+        visited.push(n);
+        cells.push(n);
+      }
+    }
+
+  }
+
 }
 
-console.log(
-  main('a1', 'c1').map((r: number[][]) => {
-    return r.map((point: number[]) => {
-      return point_num_to_string(point);
-    }).join(',');
-  }).join("\r\n"));
+main('a1', 'a3');
